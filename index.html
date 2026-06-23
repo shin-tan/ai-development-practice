@@ -89,10 +89,25 @@
       background-color: #fafafa;
     }
 
+    /* 完了チェックボックス */
+    .todo-checkbox {
+      margin-right: 10px;
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
     /* ToDoのテキスト */
     .todo-text {
       flex: 1;
       word-break: break-word;
+    }
+
+    /* 完了したToDoのテキスト（取り消し線） */
+    .todo-text.completed {
+      text-decoration: line-through;
+      color: #999;
     }
 
     /* 削除ボタン */
@@ -148,7 +163,7 @@
     const todoCount = document.getElementById('todo-count');
     const emptyMessage = document.getElementById('empty-message');
 
-    // ToDoを配列で管理する（各ToDoは { id, text } の形）
+    // ToDoを配列で管理する（各ToDoは { id, text, completed } の形）
     let todos = [];
 
     // 画面を最新の状態に更新する関数
@@ -161,10 +176,24 @@
         const listItem = document.createElement('li');
         listItem.className = 'todo-item';
 
+        // 完了チェックボックス
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'todo-checkbox';
+        checkbox.checked = todo.completed;
+        // チェックのON/OFFで完了状態を切り替える
+        checkbox.addEventListener('change', function () {
+          toggleTodoComplete(todo.id, checkbox.checked);
+        });
+
         // ToDoのテキスト部分
         const todoText = document.createElement('span');
         todoText.className = 'todo-text';
         todoText.textContent = todo.text;
+        // 完了済みなら取り消し線用のクラスを付ける
+        if (todo.completed) {
+          todoText.classList.add('completed');
+        }
 
         // 削除ボタン
         const deleteButton = document.createElement('button');
@@ -176,6 +205,7 @@
           deleteTodo(todo.id);
         });
 
+        listItem.appendChild(checkbox);
         listItem.appendChild(todoText);
         listItem.appendChild(deleteButton);
         todoList.appendChild(listItem);
@@ -203,16 +233,27 @@
         return;
       }
 
-      // 新しいToDoオブジェクトを配列に追加
+      // 新しいToDoオブジェクトを配列に追加（初期状態は未完了）
       todos.push({
         id: Date.now(),
-        text: text
+        text: text,
+        completed: false
       });
 
       // 入力欄を空にする
       todoInput.value = '';
 
       // 画面を更新
+      renderTodos();
+    }
+
+    // 指定したidのToDoの完了状態を切り替える関数
+    function toggleTodoComplete(id, isCompleted) {
+      todos.forEach(function (todo) {
+        if (todo.id === id) {
+          todo.completed = isCompleted;
+        }
+      });
       renderTodos();
     }
 
