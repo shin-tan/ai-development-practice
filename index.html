@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hello SHIN</title>
+  <title>ToDoアプリ</title>
   <style>
+    /* ページ全体の設定 */
     body {
       margin: 0;
       min-height: 100vh;
@@ -12,16 +13,229 @@
       justify-content: center;
       align-items: center;
       background-color: white;
+      font-family: sans-serif;
+      color: #333;
     }
 
+    /* ToDoアプリのメインコンテナ（画面中央に配置） */
+    .todo-app {
+      width: 100%;
+      max-width: 480px;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+
+    /* タイトル */
     h1 {
+      margin: 0 0 20px;
+      font-size: 28px;
+      text-align: center;
+    }
+
+    /* 入力欄と追加ボタンを横並びにする */
+    .input-area {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    /* ToDo入力欄 */
+    #todo-input {
+      flex: 1;
+      padding: 10px 12px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    /* 追加ボタン */
+    #add-button {
+      padding: 10px 16px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+
+    #add-button:hover {
+      background-color: #0056b3;
+    }
+
+    /* 件数表示エリア */
+    #todo-count {
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    /* ToDo一覧 */
+    #todo-list {
+      list-style: none;
       margin: 0;
-      font-size: 48px;
-      color: black;
+      padding: 0;
+    }
+
+    /* 各ToDo項目 */
+    .todo-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      background-color: #fafafa;
+    }
+
+    /* ToDoのテキスト */
+    .todo-text {
+      flex: 1;
+      word-break: break-word;
+    }
+
+    /* 削除ボタン */
+    .delete-button {
+      margin-left: 12px;
+      padding: 6px 10px;
+      font-size: 14px;
+      border: none;
+      border-radius: 4px;
+      background-color: #dc3545;
+      color: white;
+      cursor: pointer;
+    }
+
+    .delete-button:hover {
+      background-color: #b02a37;
+    }
+
+    /* ToDoが0件のときに表示するメッセージ */
+    #empty-message {
+      text-align: center;
+      color: #888;
+      font-size: 16px;
+      padding: 24px 0;
     }
   </style>
 </head>
 <body>
-  <h1>Hello SHIN</h1>
+  <div class="todo-app">
+    <h1>ToDoアプリ</h1>
+
+    <!-- 入力欄と追加ボタン -->
+    <div class="input-area">
+      <input type="text" id="todo-input" placeholder="やることを入力">
+      <button id="add-button" type="button">追加</button>
+    </div>
+
+    <!-- 件数表示 -->
+    <p id="todo-count">0件</p>
+
+    <!-- ToDo一覧 -->
+    <ul id="todo-list"></ul>
+
+    <!-- ToDoが0件のときのメッセージ -->
+    <p id="empty-message">やることはありません</p>
+  </div>
+
+  <script>
+    // HTMLの要素を取得しておく（後で何度も使うため）
+    const todoInput = document.getElementById('todo-input');
+    const addButton = document.getElementById('add-button');
+    const todoList = document.getElementById('todo-list');
+    const todoCount = document.getElementById('todo-count');
+    const emptyMessage = document.getElementById('empty-message');
+
+    // ToDoを配列で管理する（各ToDoは { id, text } の形）
+    let todos = [];
+
+    // 画面を最新の状態に更新する関数
+    function renderTodos() {
+      // 一覧を一度空にしてから、配列の内容をもとに作り直す
+      todoList.innerHTML = '';
+
+      todos.forEach(function (todo) {
+        // li（リスト項目）を作成
+        const listItem = document.createElement('li');
+        listItem.className = 'todo-item';
+
+        // ToDoのテキスト部分
+        const todoText = document.createElement('span');
+        todoText.className = 'todo-text';
+        todoText.textContent = todo.text;
+
+        // 削除ボタン
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'delete-button';
+        deleteButton.type = 'button';
+        deleteButton.textContent = '削除';
+        // クリックしたToDoのidを渡して削除
+        deleteButton.addEventListener('click', function () {
+          deleteTodo(todo.id);
+        });
+
+        listItem.appendChild(todoText);
+        listItem.appendChild(deleteButton);
+        todoList.appendChild(listItem);
+      });
+
+      // 件数を更新
+      todoCount.textContent = todos.length + '件';
+
+      // ToDoが0件ならメッセージを表示、1件以上なら非表示
+      if (todos.length === 0) {
+        emptyMessage.style.display = 'block';
+        todoList.style.display = 'none';
+      } else {
+        emptyMessage.style.display = 'none';
+        todoList.style.display = 'block';
+      }
+    }
+
+    // 新しいToDoを追加する関数
+    function addTodo() {
+      const text = todoInput.value.trim();
+
+      // 空文字や空白だけの入力は追加しない
+      if (text === '') {
+        return;
+      }
+
+      // 新しいToDoオブジェクトを配列に追加
+      todos.push({
+        id: Date.now(),
+        text: text
+      });
+
+      // 入力欄を空にする
+      todoInput.value = '';
+
+      // 画面を更新
+      renderTodos();
+    }
+
+    // 指定したidのToDoを削除する関数
+    function deleteTodo(id) {
+      todos = todos.filter(function (todo) {
+        return todo.id !== id;
+      });
+      renderTodos();
+    }
+
+    // 追加ボタンをクリックしたとき
+    addButton.addEventListener('click', addTodo);
+
+    // Enterキーを押したときも追加
+    todoInput.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        addTodo();
+      }
+    });
+
+    // 最初の表示
+    renderTodos();
+  </script>
 </body>
 </html>
